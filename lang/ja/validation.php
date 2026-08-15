@@ -17,11 +17,13 @@ return [
     'min' => [
         'string' => ':attributeは:min文字以上で入力してください。',
         'array' => ':attributeは:min個以上選択してください。',
+        'numeric' => ':attributeは:min以上で入力してください。',
     ],
 
     'max' => [
         'string' => ':attributeは:max文字以内で入力してください。',
         'array' => ':attributeは:max個以内で選択してください。',
+        'numeric' => ':attributeは:max以下で入力してください。',
     ],
 
     'attributes' => [
@@ -37,5 +39,8 @@ return [
         'image_url' => '画像URL',
         'genres' => 'ジャンル',
         'genres.*' => 'ジャンル',
+
+        'rating' => '評価',
+        'comment' => 'コメント',
     ],
 ];
