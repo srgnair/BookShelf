@@ -12,6 +12,9 @@ class Book extends Model
 {
     use HasFactory;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'user_id',
         'title',
@@ -21,6 +24,16 @@ class Book extends Model
         'description',
         'image_url',
     ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'published_date' => 'date',
+        ];
+    }
 
     public function user(): BelongsTo
     {
