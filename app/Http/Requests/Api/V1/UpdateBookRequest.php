@@ -19,7 +19,6 @@ class UpdateBookRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'integer', 'exists:users,id'],
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
             'isbn' => ['required', 'string', 'size:13', Rule::unique('books')->ignore($this->route('book'))],
@@ -28,26 +27,6 @@ class UpdateBookRequest extends FormRequest
             'image_url' => ['nullable', 'url', 'max:255'],
             'genres' => ['required', 'array', 'min:1'],
             'genres.*' => ['integer', 'distinct', 'exists:genres,id'],
-        ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function attributes(): array
-    {
-        return [
-            'user_id' => 'ユーザーID',
-        ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'user_id.exists' => '指定されたユーザーが存在しません。',
         ];
     }
 }

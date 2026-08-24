@@ -18,7 +18,6 @@ class StoreBookRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'integer', 'exists:users,id'],
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
             'isbn' => ['required', 'string', 'size:13', 'unique:books,isbn'],
@@ -37,16 +36,6 @@ class StoreBookRequest extends FormRequest
     {
         return [
             'user_id' => 'ユーザーID',
-        ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'user_id.exists' => '指定されたユーザーが存在しません。',
         ];
     }
 }

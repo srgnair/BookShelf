@@ -7,6 +7,7 @@ use App\Models\Genre;
 use App\Models\Review;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class BookApiTest extends TestCase
@@ -138,8 +139,9 @@ class BookApiTest extends TestCase
         $user = User::factory()->create();
         $genres = Genre::factory()->count(2)->create();
 
+        Sanctum::actingAs($user);
+
         $payload = [
-            'user_id' => $user->id,
             'title' => 'New API Book',
             'author' => 'API Author',
             'isbn' => '9784000000000',
@@ -171,6 +173,9 @@ class BookApiTest extends TestCase
 
     public function test_store_returns_422_with_validation_errors(): void
     {
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user);
         $response = $this->postJson('/api/v1/books', [
             'title' => '',
             'author' => '',
@@ -181,7 +186,7 @@ class BookApiTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors([
-            'user_id', 'title', 'author', 'isbn', 'published_date', 'genres',
+            'title', 'author', 'isbn', 'published_date', 'genres',
         ]);
     }
 
@@ -195,8 +200,9 @@ class BookApiTest extends TestCase
         $newGenre = Genre::factory()->create();
         $book->genres()->attach($oldGenre);
 
+        Sanctum::actingAs($user);
+
         $payload = [
-            'user_id' => $user->id,
             'title' => 'Updated Title',
             'author' => 'Updated Author',
             'isbn' => '9784000000111',
@@ -230,8 +236,9 @@ class BookApiTest extends TestCase
         $user = User::factory()->create();
         $genre = Genre::factory()->create();
 
+        Sanctum::actingAs($user);
+
         $response = $this->putJson('/api/v1/books/99999', [
-            'user_id' => $user->id,
             'title' => 'X',
             'author' => 'Y',
             'isbn' => '9784000000222',
@@ -248,6 +255,8 @@ class BookApiTest extends TestCase
         $user = User::factory()->create();
         $book = Book::factory()->for($user)->create();
 
+        Sanctum::actingAs($user);
+
         $response = $this->putJson("/api/v1/books/{$book->id}", [
             'title' => '',
             'author' => '',
@@ -258,7 +267,7 @@ class BookApiTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors([
-            'user_id', 'title', 'author', 'isbn', 'published_date', 'genres',
+            'title', 'author', 'isbn', 'published_date', 'genres',
         ]);
     }
 
@@ -269,6 +278,8 @@ class BookApiTest extends TestCase
         $user = User::factory()->create();
         $book = Book::factory()->for($user)->create();
 
+        Sanctum::actingAs($user);
+
         $response = $this->deleteJson("/api/v1/books/{$book->id}");
 
         $response->assertStatus(204);
@@ -277,6 +288,10 @@ class BookApiTest extends TestCase
 
     public function test_destroy_returns_404_for_unknown_book(): void
     {
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user);
+
         $response = $this->deleteJson('/api/v1/books/99999');
 
         $response->assertStatus(404);
