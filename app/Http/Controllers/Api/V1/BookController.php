@@ -8,7 +8,6 @@ use App\Http\Requests\Api\V1\StoreBookRequest;
 use App\Http\Requests\Api\V1\UpdateBookRequest;
 use App\Http\Resources\Api\V1\BookResource;
 use App\Models\Book;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -51,43 +50,64 @@ class BookController extends Controller
         return new BookResource($book);
     }
 
+    /**
+     * 書籍を新規登録（要 Sanctum 認証）
+     */
     public function store(StoreBookRequest $request): JsonResponse
     {
         $validated = $request->validated();
         $genreIds = $validated['genres'];
-        $userId = $validated['user_id'];
-        unset($validated['genres'], $validated['user_id']);
 
-        $book = User::findOrFail($userId)->books()->create($validated);
+        $bookData = collect($validated)
+            ->except('genres')
+            ->toArray();
+
+        $book = $request->user()
+            ->books()
+            ->create($bookData);
+
         $book->genres()->sync($genreIds);
 
-        $book->load(['genres', 'reviews.user']);
-        $book->loadCount('reviews');
-        $book->loadAvg('reviews', 'rating');
+        $book->load(['genres', 'reviews.user'])
+            ->loadCount('reviews')
+            ->loadAvg('reviews', 'rating');
 
         return (new BookResource($book))
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
+    /**
+     * 書籍を更新（要 Sanctum 認証 + 書籍所有者）
+     */
     public function update(UpdateBookRequest $request, Book $book): BookResource
     {
+        $this->authorize('update', $book);
+
         $validated = $request->validated();
         $genreIds = $validated['genres'];
-        unset($validated['genres'], $validated['user_id']);
 
-        $book->update($validated);
+        $bookData = collect($validated)
+            ->except('genres')
+            ->toArray();
+
+        $book->update($bookData);
         $book->genres()->sync($genreIds);
 
-        $book->load(['genres', 'reviews.user']);
-        $book->loadCount('reviews');
-        $book->loadAvg('reviews', 'rating');
+        $book->load(['genres', 'reviews.user'])
+            ->loadCount('reviews')
+            ->loadAvg('reviews', 'rating');
 
         return new BookResource($book);
     }
 
+    /**
+     * 書籍を削除（要 Sanctum 認証 + 書籍所有者）
+     */
     public function destroy(Book $book): JsonResponse
     {
+        $this->authorize('delete', $book);
+
         $book->delete();
 
         return response()->json(null, Response::HTTP_NO_CONTENT);
