@@ -6,8 +6,10 @@ use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Models\Book;
 use App\Models\Genre;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
 
 class BookController extends Controller
@@ -133,5 +135,57 @@ class BookController extends Controller
         return redirect()
             ->route('books.index')
             ->with('success', '書籍を削除しました。');
+    }
+
+    public function searchByIsbn(string $isbn): JsonResponse
+    {
+        if (! preg_match('/^\d{13}$/', $isbn)) {
+            return response()->json([
+                'error' => 'ISBNは13桁の数字で入力してください。',
+            ], 422);
+        }
+
+        $apiKey = config('services.google_books.api_key');
+        $url = "https://www.googleapis.com/books/v1/volumes?q=isbn:{$isbn}";
+
+        if ($apiKey) {
+            $url .= "&key={$apiKey}";
+        }
+
+        try {
+            $response = Http::get($url);
+
+            if ($response->status() === 429) {
+                return response()->json([
+                    'error' => '書籍情報の取得回数が上限に達しました。時間をおいて再度お試しください。',
+                ], 429);
+            }
+
+            if ($response->failed()) {
+                return response()->json([
+                    'error' => '書籍情報の取得に失敗しました。時間をおいて再度お試しください。',
+                ], 500);
+            }
+
+            $data = $response->json();
+
+            if (! isset($data['items'][0])) {
+                return response()->json([
+                    'error' => '書籍が見つかりませんでした。',
+                ], 404);
+            }
+
+            $volumeInfo = $data['items'][0]['volumeInfo'];
+
+            return response()->json([
+                'title' => $volumeInfo['title'] ?? '',
+                'author' => isset($volumeInfo['authors']) ? implode(', ', $volumeInfo['authors']) : '',
+                'published_date' => $volumeInfo['publishedDate'] ?? '',
+                'description' => $volumeInfo['description'] ?? '',
+                'image_url' => $volumeInfo['imageLinks']['thumbnail'] ?? '',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => '書籍情報の取得に失敗しました。時間をおいて再度お試しください。'], 500);
+        }
     }
 }
