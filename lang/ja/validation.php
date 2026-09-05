@@ -13,6 +13,7 @@ return [
     'distinct' => ':attributeに重複した値が含まれています。',
     'exists' => '選択された:attributeは存在しません。',
     'before_or_equal' => ':attributeは今日以前の日付を入力してください。',
+    'after_or_equal' => ':attributeは今日以降の日付を入力してください。',
 
     'min' => [
         'string' => ':attributeは:min文字以上で入力してください。',
@@ -42,5 +43,7 @@ return [
 
         'rating' => '評価',
         'comment' => 'コメント',
+
+        'target_date' => '期日',
     ],
 ];
